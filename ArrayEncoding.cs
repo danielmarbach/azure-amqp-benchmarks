@@ -12,6 +12,8 @@ public class ArrayEncoding
     public static byte[] RandomBytes1MB = new byte[1024 * 1024];
     public static int[] RandomInt32Array1M = new int[1024 * 1024];
     public static int[] RandomInt32Array1K = new int[1024];
+    public static long[] RandomInt64Array1M = new long[1024 * 1024];
+    public static long[] RandomInt64Array1K = new long[1024];
 
     public static AmqpSymbol[] RandomAmqpSymbolArray100K = new AmqpSymbol[1024 * 10];
     public static AmqpSymbol[] RandomAmqpSymbolArray1K = new AmqpSymbol[1024];
@@ -30,10 +32,14 @@ public class ArrayEncoding
 
     public static byte[] EncodedInt32Array1M;
     public static byte[] EncodedInt32Array1K;
+    public static byte[] EncodedInt64Array1M;
+    public static byte[] EncodedInt64Array1K;
     public static byte[] EncodedBoolArray1M;
     public static byte[] EncodedBoolArray1K;
     public static ByteBuffer EncodedInt32Array1MBuffer;
     public static ByteBuffer EncodedInt32Array1KBuffer;
+    public static ByteBuffer EncodedInt64Array1MBuffer;
+    public static ByteBuffer EncodedInt64Array1KBuffer;
 
     public static ByteBuffer EncodedBoolArray1MBuffer;
     public static ByteBuffer EncodedBoolArray1KBuffer;
@@ -68,6 +74,16 @@ public class ArrayEncoding
         AmqpCodec.EncodeArray(RandomInt32Array1K, ScratchByteBuffer);
         EncodedInt32Array1K = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
         EncodedInt32Array1KBuffer = new ByteBuffer(EncodedInt32Array1K, 0, EncodedInt32Array1K.Length);
+
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomInt64Array1M, ScratchByteBuffer);
+        EncodedInt64Array1M = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedInt64Array1MBuffer = new ByteBuffer(EncodedInt64Array1M, 0, EncodedInt64Array1M.Length);
+
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomInt64Array1K, ScratchByteBuffer);
+        EncodedInt64Array1K = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedInt64Array1KBuffer = new ByteBuffer(EncodedInt64Array1K, 0, EncodedInt64Array1K.Length);
 
         ScratchByteBuffer.Reset();
         AmqpCodec.EncodeArray(RandomBoolArray1M, ScratchByteBuffer);
@@ -183,6 +199,38 @@ public class ArrayEncoding
     {
         EncodedInt32Array1KBuffer.Seek(0);
         var result = AmqpCodec.DecodeArray<int>(EncodedInt32Array1KBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayInt64Encode_MAA_1M()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomInt64Array1M, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayInt64Encode_MAA_1K()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomInt64Array1K, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public int ArrayInt64Decode_1M_MAA()
+    {
+        EncodedInt64Array1MBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<long>(EncodedInt64Array1MBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public int ArrayInt64Decode_1K_MAA()
+    {
+        EncodedInt64Array1KBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<long>(EncodedInt64Array1KBuffer);
         return result.Length;
     }
 
