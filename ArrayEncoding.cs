@@ -355,7 +355,7 @@ public class ArrayEncoding
     public int ArrayUInt64Decode_1K_MAA()
     {
         EncodedUInt64Array1KBuffer.Seek(0);
-        var result = AmqpCodec.DecodeArray<long>(EncodedUInt64Array1KBuffer);
+        var result = AmqpCodec.DecodeArray<ulong>(EncodedUInt64Array1KBuffer);
         return result.Length;
     }
 
