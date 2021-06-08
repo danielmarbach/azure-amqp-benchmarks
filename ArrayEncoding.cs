@@ -20,6 +20,10 @@ public class ArrayEncoding
     public static ulong[] RandomUInt64Array1K = new ulong[1024];
     public static decimal[] RandomDecimalArray1M = new decimal[1024 * 1024];
     public static decimal[] RandomDecimalArray1K = new decimal[1024];
+    public static double[] RandomDoubleArray1M = new double[1024 * 1024];
+    public static double[] RandomDoubleArray1K = new double[1024];
+    public static float[] RandomFloatArray1M = new float[1024 * 1024];
+    public static float[] RandomFloatArray1K = new float[1024];
 
     public static AmqpSymbol[] RandomAmqpSymbolArray100K = new AmqpSymbol[1024 * 10];
     public static AmqpSymbol[] RandomAmqpSymbolArray1K = new AmqpSymbol[1024];
@@ -45,6 +49,10 @@ public class ArrayEncoding
     public static byte[] EncodedBoolArray1K;
     public static byte[] EncodedDecimalArray1M;
     public static byte[] EncodedDecimalArray1K;
+    public static byte[] EncodedDoubleArray1M;
+    public static byte[] EncodedDoubleArray1K;
+    public static byte[] EncodedFloatArray1M;
+    public static byte[] EncodedFloatArray1K;
     public static ByteBuffer EncodedInt32Array1MBuffer;
     public static ByteBuffer EncodedInt32Array1KBuffer;
     public static ByteBuffer EncodedUInt32Array1MBuffer;
@@ -58,6 +66,10 @@ public class ArrayEncoding
     public static ByteBuffer EncodedBoolArray1KBuffer;
     public static ByteBuffer EncodedDecimalArray1MBuffer;
     public static ByteBuffer EncodedDecimalArray1KBuffer;
+    public static ByteBuffer EncodedDoubleArray1MBuffer;
+    public static ByteBuffer EncodedDoubleArray1KBuffer;
+    public static ByteBuffer EncodedFloatArray1MBuffer;
+    public static ByteBuffer EncodedFloatArray1KBuffer;
 
     public static ByteBuffer EncodedAmqpSymbolArray1MBuffer;
     public static ByteBuffer EncodedAmqpSymbolArray1KBuffer;
@@ -82,6 +94,10 @@ public class ArrayEncoding
         FillBoolArray(rng, RandomBoolArray1M);
         FillDecimalArray(rng, RandomDecimalArray1K);
         FillDecimalArray(rng, RandomDecimalArray1M);
+        FillDoubleArray(rng, RandomDoubleArray1K);
+        FillDoubleArray(rng, RandomDoubleArray1M);
+        FillFloatArray(rng, RandomFloatArray1K);
+        FillFloatArray(rng, RandomFloatArray1M);
 
         ScratchByteBuffer.Reset();
         AmqpCodec.EncodeBinary(RandomBytes1MB, ScratchByteBuffer);
@@ -148,6 +164,26 @@ public class ArrayEncoding
         EncodedDecimalArray1K = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
         EncodedDecimalArray1KBuffer = new ByteBuffer(EncodedDecimalArray1K, 0, EncodedDecimalArray1K.Length);
 
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomDoubleArray1M, ScratchByteBuffer);
+        EncodedDoubleArray1M = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedDoubleArray1MBuffer = new ByteBuffer(EncodedDoubleArray1M, 0, EncodedDoubleArray1M.Length);
+
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomDoubleArray1K, ScratchByteBuffer);
+        EncodedDoubleArray1K = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedDoubleArray1KBuffer = new ByteBuffer(EncodedDoubleArray1K, 0, EncodedDoubleArray1K.Length);
+
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomFloatArray1M, ScratchByteBuffer);
+        EncodedFloatArray1M = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedFloatArray1MBuffer = new ByteBuffer(EncodedFloatArray1M, 0, EncodedFloatArray1M.Length);
+
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomFloatArray1K, ScratchByteBuffer);
+        EncodedFloatArray1K = ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos).ToArray();
+        EncodedFloatArray1KBuffer = new ByteBuffer(EncodedFloatArray1K, 0, EncodedFloatArray1K.Length);
+
         EncodedAmqpSymbolArray1MBuffer = new ByteBuffer(new byte[1024 * 1024 * 10], autoGrow: true);
         AmqpCodec.EncodeArray(RandomAmqpSymbolArray100K, EncodedAmqpSymbolArray1MBuffer);
 
@@ -168,6 +204,25 @@ public class ArrayEncoding
         for (int i = 0; i < decimalArray.Length; i++)
         {
             decimalArray[i] = new decimal(rng.Next(10), rng.Next(10), rng.Next(10), isNegative: false, 0);
+        }
+    }
+
+    private static void FillDoubleArray(Random rng, double[] doubleArray)
+    {
+        for (int i = 0; i < doubleArray.Length; i++)
+        {
+            doubleArray[i] = rng.NextDouble();
+        }
+    }
+
+    private static void FillFloatArray(Random rng, float[] floatArray)
+    {
+        const double range = float.MaxValue - (double) float.MinValue;
+        for (int i = 0; i < floatArray.Length; i++)
+        {
+            double sample = rng.NextDouble();
+            double scaled = (sample * range) + float.MinValue;
+            floatArray[i] = (float) scaled;
         }
     }
 
@@ -420,6 +475,70 @@ public class ArrayEncoding
     {
         EncodedDecimalArray1KBuffer.Seek(0);
         var result = AmqpCodec.DecodeArray<decimal>(EncodedDecimalArray1KBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayDoubleEncode_MAA_1M()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomDoubleArray1M, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayDoubleEncode_MAA_1K()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomDoubleArray1K, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public int ArrayDoubleDecode_1M_MAA()
+    {
+        EncodedDecimalArray1MBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<double>(EncodedDoubleArray1MBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public int ArrayDoubleDecode_1K_MAA()
+    {
+        EncodedDecimalArray1KBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<double>(EncodedDoubleArray1KBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayFloatEncode_MAA_1M()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomFloatArray1M, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public ReadOnlyMemory<byte> ArrayFloatEncode_MAA_1K()
+    {
+        ScratchByteBuffer.Reset();
+        AmqpCodec.EncodeArray(RandomFloatArray1K, ScratchByteBuffer);
+        return ScratchByteBuffer.Buffer.AsMemory(0, ScratchByteBuffer.WritePos);
+    }
+
+    [Benchmark]
+    public int ArrayFloatDecode_1M_MAA()
+    {
+        EncodedDecimalArray1MBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<float>(EncodedFloatArray1MBuffer);
+        return result.Length;
+    }
+
+    [Benchmark]
+    public int ArrayFloatDecode_1K_MAA()
+    {
+        EncodedDecimalArray1KBuffer.Seek(0);
+        var result = AmqpCodec.DecodeArray<float>(EncodedFloatArray1KBuffer);
         return result.Length;
     }
 }
