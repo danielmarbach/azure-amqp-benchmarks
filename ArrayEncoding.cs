@@ -74,6 +74,14 @@ public class ArrayEncoding
     public static ByteBuffer EncodedAmqpSymbolArray1MBuffer;
     public static ByteBuffer EncodedAmqpSymbolArray1KBuffer;
 
+    // missing
+    // short
+    // string
+    // timestamp
+    // ubyte
+    // ushort
+    // uuid
+
     [GlobalSetup]
     public void GlobalSetup()
     {
